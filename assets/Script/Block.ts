@@ -1,5 +1,4 @@
 import GamePlay from "./GamePlay";
-import Levels from "./Levels";
 
 const { ccclass, property } = cc._decorator;
 
@@ -13,40 +12,66 @@ export default class Block extends cc.Component {
   lockUp = false;
   lockDown = false;
 
+  lockLeftX = null;
+  lockRightX = null;
+  lockUpY = null;
+  lockDownY = null;
+
   onCollisionEnter(other, self) {
+    if (GamePlay.instance.currentHoldingBlock != this.node) return;
     if (other.tag == 1) {
-      console.log("next level!");
-      GamePlay.instance.onMouseLeave();
-      GamePlay.instance.onMouseUp();
-      Levels.instance.currentLevel += 1;
-      Levels.instance.LoadScene(null, Levels.instance.currentLevel.toString());
-      
+      GamePlay.instance.onCompleteLevel();
     } else {
+      GamePlay.instance.isOnBlockCollision = true;
+      GamePlay.instance.touchLocOnBlockCollision =
+        GamePlay.instance.currentTouchLoc;
+
       this.isColliding = true;
-      if (GamePlay.instance.touchDelta.y > 0) {
-        this.lockUp = true;
-        this.lockDown = false;
-      }
-      if (GamePlay.instance.touchDelta.y < 0) {
-        this.lockDown = true;
-        this.lockUp = false;
-      }
-      if (GamePlay.instance.touchDelta.x > 0) {
-        this.lockRight = true;
-        this.lockLeft = false;
-      }
-      if (GamePlay.instance.touchDelta.x < 0) {
-        this.lockRight = false;
-        this.lockLeft = true;
+
+      let nodeA = this.node;
+      let nodeB: cc.Node = other.node;
+
+      if (this.typeMove == 2) {
+        if (nodeA.position.x - nodeB.position.x < 0) {
+          let pos = nodeA.position;
+          pos.x =
+            nodeB.x -
+            nodeB.getContentSize().width / 2 -
+            nodeA.getContentSize().width / 2;
+          nodeA.position = pos;
+          this.lockRight = true;
+          this.lockRightX = GamePlay.instance.currentTouchLoc.x;
+        } else {
+          let pos = nodeA.position;
+          pos.x =
+            nodeB.x +
+            nodeB.getContentSize().width / 2 +
+            nodeA.getContentSize().width / 2;
+          nodeA.position = pos;
+          this.lockLeft = true;
+          this.lockLeftX = GamePlay.instance.currentTouchLoc.x;
+        }
+      } else {
+        if (nodeA.position.y - nodeB.position.y < 0) {
+          let pos = nodeA.position;
+          pos.y =
+            nodeB.y -
+            nodeB.getContentSize().height / 2 -
+            nodeA.getContentSize().height / 2;
+          nodeA.position = pos;
+          this.lockUp = true;
+          this.lockUpY = GamePlay.instance.currentTouchLoc.y;
+        } else {
+          let pos = nodeA.position;
+          pos.y =
+            nodeB.y +
+            nodeB.getContentSize().height / 2 +
+            nodeA.getContentSize().height / 2;
+          nodeA.position = pos;
+          this.lockDown = true;
+          this.lockDownY = GamePlay.instance.currentTouchLoc.y;
+        }
       }
     }
-  }
-
-  onCollisionExit() {
-    this.isColliding = false;
-    this.lockLeft = false;
-    this.lockRight = false;
-    this.lockUp = false;
-    this.lockDown = false;
   }
 }
